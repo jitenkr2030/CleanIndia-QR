@@ -9,7 +9,7 @@ import { Star, MessageSquare, Camera, MapPin, Clock, CheckCircle, AlertTriangle 
 import { useToast } from '@/hooks/use-toast'
 
 export default function Home() {
-  const [view, setView] = useState<'landing' | 'feedback' | 'admin' | 'staff'>('landing')
+  const [view, setView] = useState<'landing' | 'feedback' | 'admin' | 'staff' | 'management'>('landing')
   const [toiletData, setToiletData] = useState<any>(null)
   const [rating, setRating] = useState(0)
   const [selectedIssue, setSelectedIssue] = useState('')
@@ -20,6 +20,11 @@ export default function Home() {
   // Admin dashboard state
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [adminLoading, setAdminLoading] = useState(true)
+  const [adminActiveTab, setAdminActiveTab] = useState<'overview' | 'analytics' | 'alerts'>('overview')
+  const [analyticsData, setAnalyticsData] = useState<any>(null)
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
+  const [alertsData, setAlertsData] = useState<any>(null)
+  const [alertsLoading, setAlertsLoading] = useState(false)
 
   // Staff portal state
   const [assignedToilets, setAssignedToilets] = useState<any[]>([])
@@ -28,6 +33,15 @@ export default function Home() {
   const [selectedToilet, setSelectedToilet] = useState<any>(null)
   const [cleaningNotes, setCleaningNotes] = useState('')
   const [isSubmittingCleaning, setIsSubmittingCleaning] = useState(false)
+
+  // Management portal state
+  const [companies, setCompanies] = useState<any[]>([])
+  const [locations, setLocations] = useState<any[]>([])
+  const [floors, setFloors] = useState<any[]>([])
+  const [managementLoading, setManagementLoading] = useState(true)
+  const [selectedCompany, setSelectedCompany] = useState<string>('')
+  const [selectedLocation, setSelectedLocation] = useState<string>('')
+  const [activeTab, setActiveTab] = useState<'companies' | 'locations' | 'floors' | 'toilets' | 'staff'>('companies')
 
   // Check if we have a QR code in the URL
   useEffect(() => {
@@ -98,6 +112,50 @@ export default function Home() {
     }
   }, [view])
 
+  // Analytics data fetch
+  useEffect(() => {
+    if (view === 'admin' && adminActiveTab === 'analytics') {
+      const fetchAnalyticsData = async () => {
+        setAnalyticsLoading(true)
+        try {
+          const response = await fetch('/api/analytics?type=overview&period=7d')
+          const data = await response.json()
+          if (response.ok) {
+            setAnalyticsData(data)
+          }
+        } catch (error) {
+          console.error('Error fetching analytics data:', error)
+        } finally {
+          setAnalyticsLoading(false)
+        }
+      }
+
+      fetchAnalyticsData()
+    }
+  }, [view, adminActiveTab])
+
+  // Alerts data fetch
+  useEffect(() => {
+    if (view === 'admin' && adminActiveTab === 'alerts') {
+      const fetchAlertsData = async () => {
+        setAlertsLoading(true)
+        try {
+          const response = await fetch('/api/alerts')
+          const data = await response.json()
+          if (response.ok) {
+            setAlertsData(data)
+          }
+        } catch (error) {
+          console.error('Error fetching alerts data:', error)
+        } finally {
+          setAlertsLoading(false)
+        }
+      }
+
+      fetchAlertsData()
+    }
+  }, [view, adminActiveTab])
+
   // Staff portal data fetch
   useEffect(() => {
     if (view === 'staff') {
@@ -117,6 +175,38 @@ export default function Home() {
       }
 
       fetchAssignedToilets()
+    }
+  }, [view])
+
+  // Management portal data fetch
+  useEffect(() => {
+    if (view === 'management') {
+      const fetchManagementData = async () => {
+        try {
+          // Fetch all data types
+          const [companiesRes, locationsRes, floorsRes] = await Promise.all([
+            fetch('/api/companies'),
+            fetch('/api/locations'),
+            fetch('/api/floors'),
+          ])
+
+          const [companiesData, locationsData, floorsData] = await Promise.all([
+            companiesRes.json(),
+            locationsRes.json(),
+            floorsRes.json(),
+          ])
+
+          if (companiesRes.ok) setCompanies(companiesData.companies)
+          if (locationsRes.ok) setLocations(locationsData.locations)
+          if (floorsRes.ok) setFloors(floorsData.floors)
+        } catch (error) {
+          console.error('Error fetching management data:', error)
+        } finally {
+          setManagementLoading(false)
+        }
+      }
+
+      fetchManagementData()
     }
   }, [view])
 
@@ -359,106 +449,459 @@ export default function Home() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">CleanIndia QR Admin</h1>
             <p className="text-gray-600">Smart Toilet Monitoring Dashboard</p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total Toilets</p>
-                    <p className="text-2xl font-bold">{stats.totalToilets}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <div className="text-xl">🚽</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Average Rating</p>
-                    <p className="text-2xl font-bold">{stats.averageRating.toFixed(1)}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <Star className="w-6 h-6 text-yellow-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Today's Feedback</p>
-                    <p className="text-2xl font-bold">{stats.todaysFeedback}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <MessageSquare className="w-6 h-6 text-green-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Need Cleaning</p>
-                    <p className="text-2xl font-bold text-red-600">{stats.overdueCleanings}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                    <AlertTriangle className="w-6 h-6 text-red-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+
+          {/* Tab Navigation */}
+          <div className="mb-6">
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex space-x-8">
+                <button
+                  onClick={() => setAdminActiveTab('overview')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    adminActiveTab === 'overview'
+                      ? 'border-green-500 text-green-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Overview
+                </button>
+                <button
+                  onClick={() => setAdminActiveTab('analytics')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    adminActiveTab === 'analytics'
+                      ? 'border-green-500 text-green-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Analytics & Reports
+                </button>
+                <button
+                  onClick={() => setAdminActiveTab('alerts')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm relative ${
+                    adminActiveTab === 'alerts'
+                      ? 'border-green-500 text-green-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Alerts
+                  {alertsData?.summary?.critical > 0 && (
+                    <span className="absolute -top-1 -right-2 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                      {alertsData.summary.critical}
+                    </span>
+                  )}
+                </button>
+              </nav>
+            </div>
           </div>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Feedback</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {recentFeedback.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">No feedback received yet</p>
-              ) : (
-                <div className="space-y-4">
-                  {recentFeedback.map((feedback: any) => (
-                    <div key={feedback.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+
+          {adminActiveTab === 'overview' && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium">{feedback.toilet.location} - Toilet {feedback.toilet.toiletNumber}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star key={star} className={`w-4 h-4 ${star <= feedback.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
-                            ))}
+                        <p className="text-sm font-medium text-gray-600">Total Toilets</p>
+                        <p className="text-2xl font-bold">{stats.totalToilets}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <div className="text-xl">🚽</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Average Rating</p>
+                        <p className="text-2xl font-bold">{stats.averageRating.toFixed(1)}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <Star className="w-6 h-6 text-yellow-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Today's Feedback</p>
+                        <p className="text-2xl font-bold">{stats.todaysFeedback}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <MessageSquare className="w-6 h-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Need Cleaning</p>
+                        <p className="text-2xl font-bold text-red-600">{stats.overdueCleanings}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                        <AlertTriangle className="w-6 h-6 text-red-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Feedback</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {recentFeedback.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">No feedback received yet</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {recentFeedback.map((feedback: any) => (
+                        <div key={feedback.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="font-medium">{feedback.toilet.location} - Toilet {feedback.toilet.toiletNumber}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="flex">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star key={star} className={`w-4 h-4 ${star <= feedback.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
+                                ))}
+                              </div>
+                              <span className="text-sm text-gray-600">
+                                {new Date(feedback.createdAt).toLocaleString()}
+                              </span>
+                              {feedback.issueType && (
+                                <Badge variant="outline" className="text-xs">
+                                  {feedback.issueType.replace('_', ' ')}
+                                </Badge>
+                              )}
+                            </div>
+                            {feedback.comment && (
+                              <p className="text-sm text-gray-600 mt-2">{feedback.comment}</p>
+                            )}
                           </div>
-                          <span className="text-sm text-gray-600">
-                            {new Date(feedback.createdAt).toLocaleString()}
-                          </span>
-                          {feedback.issueType && (
-                            <Badge variant="outline" className="text-xs">
-                              {feedback.issueType.replace('_', ' ')}
-                            </Badge>
+                          <Badge variant={feedback.rating <= 2 ? "destructive" : "secondary"}>
+                            {feedback.rating <= 2 ? "Action Needed" : "Good"}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {adminActiveTab === 'alerts' && (
+            <div className="space-y-6">
+              {alertsLoading ? (
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading alerts...</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  {/* Alert Summary */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Total Alerts</p>
+                            <p className="text-2xl font-bold">{alertsData?.summary?.total || 0}</p>
+                          </div>
+                          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                            <AlertTriangle className="w-6 h-6 text-gray-600" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Critical</p>
+                            <p className="text-2xl font-bold text-red-600">{alertsData?.summary?.critical || 0}</p>
+                          </div>
+                          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                            <div className="text-xl">🚨</div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">High Priority</p>
+                            <p className="text-2xl font-bold text-orange-600">{alertsData?.summary?.high || 0}</p>
+                          </div>
+                          <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                            <div className="text-xl">⚠️</div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Medium Priority</p>
+                            <p className="text-2xl font-bold text-yellow-600">{alertsData?.summary?.medium || 0}</p>
+                          </div>
+                          <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                            <div className="text-xl">🔔</div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Active Alerts */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle>Active Alerts</CardTitle>
+                        <Button size="sm" variant="outline">Refresh</Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {alertsData?.alerts?.length === 0 ? (
+                        <div className="text-center py-8">
+                          <div className="text-4xl mb-2">✅</div>
+                          <p className="text-gray-600">No active alerts</p>
+                          <p className="text-sm text-gray-500">All systems are operating normally</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {alertsData?.alerts?.map((alert: any) => (
+                            <div key={alert.id} className={`p-4 rounded-lg border-l-4 ${
+                              alert.severity === 'critical' ? 'border-red-500 bg-red-50' :
+                              alert.severity === 'high' ? 'border-orange-500 bg-orange-50' :
+                              alert.severity === 'medium' ? 'border-yellow-500 bg-yellow-50' :
+                              'border-blue-500 bg-blue-50'
+                            }`}>
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <h4 className="font-medium">{alert.title}</h4>
+                                    <Badge variant={
+                                      alert.severity === 'critical' ? 'destructive' :
+                                      alert.severity === 'high' ? 'destructive' :
+                                      alert.severity === 'medium' ? 'secondary' : 'outline'
+                                    }>
+                                      {alert.severity.toUpperCase()}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-sm text-gray-700 mb-2">{alert.message}</p>
+                                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                                    <span>📍 {alert.location}</span>
+                                    <span>🚽 {alert.toiletNumber}</span>
+                                    <span>🕐 {new Date(alert.createdAt).toLocaleString()}</span>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2 ml-4">
+                                  <Button size="sm" variant="outline">View Details</Button>
+                                  <Button size="sm">Acknowledge</Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Alert Types Legend */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Alert Types</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="text-2xl">🌟</div>
+                          <div>
+                            <p className="font-medium text-sm">Low Rating</p>
+                            <p className="text-xs text-gray-600">Toilet received 1-2 stars</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="text-2xl">⏰</div>
+                          <div>
+                            <p className="font-medium text-sm">Missed Cleaning</p>
+                            <p className="text-xs text-gray-600">Cleaning schedule overdue</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="text-2xl">📢</div>
+                          <div>
+                            <p className="font-medium text-sm">Multiple Complaints</p>
+                            <p className="text-xs text-gray-600">3+ complaints in 24h</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="text-2xl">🧹</div>
+                          <div>
+                            <p className="font-medium text-sm">No Cleaning Log</p>
+                            <p className="text-xs text-gray-600">No recent cleaning record</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="text-2xl">🚨</div>
+                          <div>
+                            <p className="font-medium text-sm">Emergency Issue</p>
+                            <p className="text-xs text-gray-600">No water or broken fixtures</p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+            </div>
+          )}
+          {adminActiveTab === 'analytics' && (
+            <div className="space-y-6">
+              {analyticsLoading ? (
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading analytics...</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  {/* Analytics Overview */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Feedback Trends</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Total Feedback (7 days)</span>
+                            <span className="font-medium">{analyticsData?.overview?.totalFeedback || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Average Rating</span>
+                            <span className="font-medium">{(analyticsData?.overview?.averageRating || 0).toFixed(1)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Low Ratings</span>
+                            <span className="font-medium text-red-600">{analyticsData?.overview?.lowRatingCount || 0}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Cleaning Performance</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Total Cleanings (7 days)</span>
+                            <span className="font-medium">{analyticsData?.overview?.totalCleanings || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Daily Average</span>
+                            <span className="font-medium">{((analyticsData?.overview?.totalCleanings || 0) / 7).toFixed(1)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Cleaning Rate</span>
+                            <span className="font-medium text-green-600">Good</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Top Issues</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {(analyticsData?.overview?.issueDistribution || []).slice(0, 3).map((issue: any, index: number) => (
+                            <div key={index} className="flex justify-between">
+                              <span className="text-sm text-gray-600">
+                                {issue.issue?.replace('_', ' ') || 'Unknown'}
+                              </span>
+                              <span className="font-medium">{issue.count}</span>
+                            </div>
+                          ))}
+                          {(analyticsData?.overview?.issueDistribution || []).length === 0 && (
+                            <p className="text-sm text-gray-500">No issues reported</p>
                           )}
                         </div>
-                        {feedback.comment && (
-                          <p className="text-sm text-gray-600 mt-2">{feedback.comment}</p>
-                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Daily Trends Chart Placeholder */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Daily Trends (Last 7 Days)</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
+                        <div className="text-center">
+                          <div className="text-4xl mb-2">📊</div>
+                          <p className="text-gray-600">Chart visualization would be implemented here</p>
+                          <p className="text-sm text-gray-500">Showing feedback and cleaning trends over time</p>
+                        </div>
                       </div>
-                      <Badge variant={feedback.rating <= 2 ? "destructive" : "secondary"}>
-                        {feedback.rating <= 2 ? "Action Needed" : "Good"}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Issue Breakdown */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Issue Analysis</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {(analyticsData?.overview?.issueDistribution || []).map((issue: any, index: number) => (
+                          <div key={index} className="text-center p-4 bg-gray-50 rounded-lg">
+                            <div className="text-2xl mb-2">
+                              {issue.issue === 'DIRTY_FLOOR' && '🧹'}
+                              {issue.issue === 'NO_SOAP' && '🧼'}
+                              {issue.issue === 'BAD_SMELL' && '👃'}
+                              {issue.issue === 'NO_WATER' && '💧'}
+                              {issue.issue === 'BROKEN_FIXTURES' && '🔧'}
+                              {issue.issue === 'WET_FLOOR' && '💦'}
+                              {issue.issue === 'NO_TISSUE' && '🧻'}
+                              {issue.issue === 'TRASH_OVERFLOW' && '🗑️'}
+                              {issue.issue === 'OTHER' && '⚠️'}
+                            </div>
+                            <div className="font-medium">{issue.count}</div>
+                            <div className="text-xs text-gray-600">
+                              {issue.issue?.replace('_', ' ') || 'Unknown'}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {(analyticsData?.overview?.issueDistribution || []).length === 0 && (
+                        <p className="text-center text-gray-500 py-8">No issues reported in the selected period</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          )}
 
           <div className="mt-6 text-center">
             <Button 
@@ -677,6 +1120,202 @@ export default function Home() {
       </div>
     )
   }
+
+  if (view === 'management') {
+    if (managementLoading) {
+      return (
+        <div className="min-h-screen bg-gray-50 p-4 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading management data...</p>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8 text-center">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Location Management</h1>
+            <p className="text-gray-600">Manage companies, locations, floors, and toilets</p>
+          </div>
+
+          {/* Tab Navigation */}
+          <div className="mb-6">
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex space-x-8">
+                {[
+                  { id: 'companies', label: 'Companies', icon: '🏢' },
+                  { id: 'locations', label: 'Locations', icon: '📍' },
+                  { id: 'floors', label: 'Floors', icon: '🏢' },
+                  { id: 'toilets', label: 'Toilets', icon: '🚽' },
+                  { id: 'staff', label: 'Staff', icon: '👥' },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === tab.id
+                        ? 'border-green-500 text-green-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="mr-2">{tab.icon}</span>
+                    {tab.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+          </div>
+
+          {/* Companies Tab */}
+          {activeTab === 'companies' && (
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Companies</CardTitle>
+                  <Button size="sm">Add Company</Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {companies.map((company) => (
+                    <div key={company.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <h3 className="font-medium">{company.name}</h3>
+                        <p className="text-sm text-gray-600">{company.email}</p>
+                        <p className="text-xs text-gray-500">{company.address}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-600">
+                          {company._count.locations} locations
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {company._count.staff} staff
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Locations Tab */}
+          {activeTab === 'locations' && (
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Locations</CardTitle>
+                  <Button size="sm">Add Location</Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {locations.map((location) => (
+                    <div key={location.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <h3 className="font-medium">{location.name}</h3>
+                        <p className="text-sm text-gray-600">{location.company.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {location.city}, {location.state} {location.pincode}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-600">
+                          {location._count.floors} floors
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Floors Tab */}
+          {activeTab === 'floors' && (
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Floors</CardTitle>
+                  <Button size="sm">Add Floor</Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {floors.map((floor) => (
+                    <div key={floor.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <h3 className="font-medium">
+                          {floor.name || `Floor ${floor.floorNumber}`}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {floor.location.name} - {floor.location.company.name}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-600">
+                          {floor._count.toilets} toilets
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Toilets Tab */}
+          {activeTab === 'toilets' && (
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Toilets</CardTitle>
+                  <Button size="sm">Add Toilet</Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <p>Toilet management interface would be implemented here</p>
+                  <p className="text-sm">Would include QR code generation, status management, etc.</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Staff Tab */}
+          {activeTab === 'staff' && (
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Staff Members</CardTitle>
+                  <Button size="sm">Add Staff</Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <p>Staff management interface would be implemented here</p>
+                  <p className="text-sm">Would include role management, assignments, performance tracking, etc.</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="mt-6 text-center">
+            <Button 
+              onClick={() => setView('landing')}
+              variant="outline"
+            >
+              Back to Home
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
       <div className="max-w-2xl w-full">
@@ -692,7 +1331,7 @@ export default function Home() {
           </CardHeader>
           
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Button 
                 onClick={() => {
                   // Simulate QR scan with real QR code from database
@@ -722,6 +1361,15 @@ export default function Home() {
               >
                 <div className="text-2xl mr-3">🧹</div>
                 Staff Portal
+              </Button>
+
+              <Button 
+                onClick={() => setView('management')}
+                variant="outline" 
+                className="h-16 text-lg border-purple-300 text-purple-700 hover:bg-purple-50"
+              >
+                <div className="text-2xl mr-3">🏢</div>
+                Management
               </Button>
             </div>
             
