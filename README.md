@@ -1,68 +1,245 @@
-# 🚀 Welcome to Z.ai Code Scaffold
+# 🚽 CleanIndia QR
 
-A modern, production-ready web application scaffold powered by cutting-edge technologies, designed to accelerate your development with [Z.ai](https://chat.z.ai)'s AI-powered coding assistance.
+**Smart Toilet Monitoring & Hygiene Feedback Platform**
 
-## ✨ Technology Stack
+A comprehensive QR-based hygiene monitoring system that enables public users to give instant feedback, staff to record cleaning activity, and admins to monitor hygiene in real-time.
 
-This scaffold provides a robust foundation built with:
+## 🌟 Features
 
-### 🎯 Core Framework
-- **⚡ Next.js 16** - The React framework for production with App Router
-- **📘 TypeScript 5** - Type-safe JavaScript for better developer experience
-- **🎨 Tailwind CSS 4** - Utility-first CSS framework for rapid UI development
+### 📱 **QR Code Feedback System**
+- **Instant Mobile Feedback**: No login required for public users
+- **Star Rating System**: 1-5 star rating with visual feedback
+- **Issue Reporting**: Select from common issues (Dirty Floor, No Soap, etc.)
+- **Photo Upload**: Optional photo evidence for complaints
+- **Real-time Status**: Shows last cleaned time and hygiene rating
+- **Trust Building**: "Maintained by CleanIndia QR" badge
 
-### 🧩 UI Components & Styling
-- **🧩 shadcn/ui** - High-quality, accessible components built on Radix UI
-- **🎯 Lucide React** - Beautiful & consistent icon library
-- **🌈 Framer Motion** - Production-ready motion library for React
-- **🎨 Next Themes** - Perfect dark mode in 2 lines of code
+### 👨‍💼 **Admin Dashboard**
+- **Real-time Statistics**: Total toilets, average rating, today's feedback
+- **Live Monitoring**: Recent feedback with ratings and issues
+- **Multi-location Support**: Manage buildings, floors, and individual toilets
+- **Staff Performance**: Track cleaning efficiency and ratings
+- **Alert System**: Low ratings and missed cleaning alerts
 
-### 📋 Forms & Validation
-- **🎣 React Hook Form** - Performant forms with easy validation
-- **✅ Zod** - TypeScript-first schema validation
+### 🧹 **Cleaning Staff Portal**
+- **Assigned Toilets**: View assigned toilets with status
+- **Digital Checklist**: 7-item cleaning checklist (Floor, Seat, Trash, etc.)
+- **Cleaning Logs**: Record cleaning activity with notes
+- **Real-time Updates**: Automatic status updates after cleaning
+- **Performance Tracking**: Individual staff performance metrics
 
-### 🔄 State Management & Data Fetching
-- **🐻 Zustand** - Simple, scalable state management
-- **🔄 TanStack Query** - Powerful data synchronization for React
-- **🌐 Fetch** - Promise-based HTTP request
+### 🏢 **Multi-Location Management**
+- **Hierarchical Structure**: Company → Location → Floor → Toilet
+- **Scalable Architecture**: Support for hundreds of toilets
+- **Location Analytics**: Per-location hygiene scores and reports
 
-### 🗄️ Database & Backend
-- **🗄️ Prisma** - Next-generation TypeScript ORM
-- **🔐 NextAuth.js** - Complete open-source authentication solution
+## 🛠 Technology Stack
 
-### 🎨 Advanced UI Features
-- **📊 TanStack Table** - Headless UI for building tables and datagrids
-- **🖱️ DND Kit** - Modern drag and drop toolkit for React
-- **📊 Recharts** - Redefined chart library built with React and D3
-- **🖼️ Sharp** - High performance image processing
+### Frontend
+- **Framework**: Next.js 16 with App Router
+- **Language**: TypeScript 5
+- **Styling**: Tailwind CSS 4
+- **UI Components**: shadcn/ui (New York style)
+- **Icons**: Lucide React
+- **State Management**: React Hooks, Zustand
+- **Forms**: React Hook Form with Zod validation
 
-### 🌍 Internationalization & Utilities
-- **🌍 Next Intl** - Internationalization library for Next.js
-- **📅 Date-fns** - Modern JavaScript date utility library
-- **🪝 ReactUse** - Collection of essential React hooks for modern development
+### Backend
+- **API**: Next.js API Routes
+- **Database**: SQLite with Prisma ORM
+- **Validation**: Zod schemas
+- **Error Handling**: Comprehensive error management
 
-## 🎯 Why This Scaffold?
-
-- **🏎️ Fast Development** - Pre-configured tooling and best practices
-- **🎨 Beautiful UI** - Complete shadcn/ui component library with advanced interactions
-- **🔒 Type Safety** - Full TypeScript configuration with Zod validation
-- **📱 Responsive** - Mobile-first design principles with smooth animations
-- **🗄️ Database Ready** - Prisma ORM configured for rapid backend development
-- **🔐 Auth Included** - NextAuth.js for secure authentication flows
-- **📊 Data Visualization** - Charts, tables, and drag-and-drop functionality
-- **🌍 i18n Ready** - Multi-language support with Next Intl
-- **🚀 Production Ready** - Optimized build and deployment settings
-- **🤖 AI-Friendly** - Structured codebase perfect for AI assistance
+### Development
+- **Package Manager**: Bun
+- **Linting**: ESLint with Next.js rules
+- **Code Quality**: TypeScript strict mode
 
 ## 🚀 Quick Start
 
+### Prerequisites
+- Node.js 18+ or Bun
+- Git
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/jitenkr2030/CleanIndia-QR.git
+   cd CleanIndia-QR
+   ```
+
+2. **Install dependencies**
+   ```bash
+   bun install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your database URL
+   ```
+
+4. **Set up the database**
+   ```bash
+   bun run db:push
+   ```
+
+5. **Seed sample data (optional)**
+   ```bash
+   bunx tsx seed.ts
+   ```
+
+6. **Start the development server**
+   ```bash
+   bun run dev
+   ```
+
+7. **Open your browser**
+   Navigate to `http://localhost:3000`
+
+## 📁 Project Structure
+
+```
+CleanIndia-QR/
+├── prisma/
+│   └── schema.prisma          # Database schema
+├── src/
+│   ├── app/
+│   │   ├── api/              # API routes
+│   │   │   ├── feedback/     # Feedback submission/retrieval
+│   │   │   ├── dashboard/    # Dashboard statistics
+│   │   │   ├── toilets/      # Toilet management
+│   │   │   └── cleaning-logs/ # Cleaning activity logs
+│   │   ├── globals.css       # Global styles
+│   │   ├── layout.tsx        # Root layout
+│   │   └── page.tsx          # Main application page
+│   ├── components/
+│   │   └── ui/               # shadcn/ui components
+│   ├── lib/
+│   │   ├── db.ts             # Database client
+│   │   └── utils.ts          # Utility functions
+│   └── hooks/
+│       └── use-toast.ts      # Toast notifications
+├── public/                   # Static assets
+├── seed.ts                   # Database seeding script
+└── README.md                 # This file
+```
+
+## 🎯 Usage Guide
+
+### For Public Users
+1. Scan QR code at any toilet location
+2. Rate hygiene (1-5 stars)
+3. Select issues if any (optional)
+4. Add comments (optional)
+5. Submit feedback
+
+### For Admin Users
+1. Access Admin Dashboard
+2. Monitor real-time statistics
+3. Review feedback and complaints
+4. Track staff performance
+5. Manage locations and toilets
+
+### For Cleaning Staff
+1. Access Staff Portal
+2. View assigned toilets
+3. Complete cleaning checklist
+4. Mark toilets as cleaned
+5. Add cleaning notes
+
+## 🔧 API Endpoints
+
+### Feedback
+- `POST /api/feedback` - Submit new feedback
+- `GET /api/feedback` - Get all feedback (admin)
+
+### Dashboard
+- `GET /api/dashboard` - Get dashboard statistics
+
+### Toilets
+- `GET /api/toilets` - Get toilets with filtering
+- `POST /api/toilets` - Create new toilet
+
+### Cleaning Logs
+- `POST /api/cleaning-logs` - Log cleaning activity
+- `GET /api/cleaning-logs` - Get cleaning history
+
+## 📊 Database Schema
+
+### Core Entities
+- **Company**: Organization managing facilities
+- **Location**: Physical building/facility
+- **Floor**: Floor within a location
+- **Toilet**: Individual toilet unit with QR code
+- **Feedback**: User feedback and ratings
+- **Staff**: Cleaning staff members
+- **CleaningLog**: Cleaning activity records
+
+### Relationships
+- Company → Locations → Floors → Toilets
+- Staff → StaffAssignments → Toilets
+- Toilets → Feedback (one-to-many)
+- Toilets → CleaningLogs (one-to-many)
+
+## 🎨 UI/UX Features
+
+- **Mobile-First Design**: Optimized for smartphones
+- **Responsive Layout**: Works on all screen sizes
+- **Accessibility**: ARIA labels, keyboard navigation
+- **Loading States**: Smooth loading indicators
+- **Error Handling**: User-friendly error messages
+- **Toast Notifications**: Non-intrusive feedback
+- **Dark Mode Support**: Ready for theme switching
+
+## 🔒 Security Features
+
+- **Input Validation**: Zod schema validation
+- **SQL Injection Prevention**: Prisma ORM
+- **XSS Protection**: React's built-in protection
+- **Rate Limiting**: Ready for implementation
+- **CORS Configuration**: Secure API access
+
+## 📈 Performance
+
+- **Optimized Images**: Next.js Image component
+- **Code Splitting**: Automatic route-based splitting
+- **Caching**: Database query optimization
+- **Bundle Size**: Optimized with Tree Shaking
+
+## 🧪 Testing
+
 ```bash
-# Install dependencies
-bun install
+# Run linting
+bun run lint
 
-# Start development server
-bun run dev
+# Type checking
+bun run type-check
 
+# Database operations
+bun run db:push
+bun run db:studio
+```
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+1. Connect repository to Vercel
+2. Set environment variables
+3. Deploy automatically
+
+### Docker
+```bash
+# Build image
+docker build -t cleanindia-qr .
+
+# Run container
+docker run -p 3000:3000 cleanindia-qr
+```
+
+### Traditional Hosting
+```bash
 # Build for production
 bun run build
 
@@ -70,72 +247,33 @@ bun run build
 bun start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see your application running.
+## 🤝 Contributing
 
-## 🤖 Powered by Z.ai
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
 
-This scaffold is optimized for use with [Z.ai](https://chat.z.ai) - your AI assistant for:
+## 📝 License
 
-- **💻 Code Generation** - Generate components, pages, and features instantly
-- **🎨 UI Development** - Create beautiful interfaces with AI assistance  
-- **🔧 Bug Fixing** - Identify and resolve issues with intelligent suggestions
-- **📝 Documentation** - Auto-generate comprehensive documentation
-- **🚀 Optimization** - Performance improvements and best practices
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-Ready to build something amazing? Start chatting with Z.ai at [chat.z.ai](https://chat.z.ai) and experience the future of AI-powered development!
+## 🙏 Acknowledgments
 
-## 📁 Project Structure
+- [Next.js](https://nextjs.org/) - React framework
+- [Prisma](https://www.prisma.io/) - Database toolkit
+- [Tailwind CSS](https://tailwindcss.com/) - CSS framework
+- [shadcn/ui](https://ui.shadcn.com/) - UI components
+- [Lucide](https://lucide.dev/) - Icon library
 
-```
-src/
-├── app/                 # Next.js App Router pages
-├── components/          # Reusable React components
-│   └── ui/             # shadcn/ui components
-├── hooks/              # Custom React hooks
-└── lib/                # Utility functions and configurations
-```
+## 📞 Support
 
-## 🎨 Available Features & Components
-
-This scaffold includes a comprehensive set of modern web development tools:
-
-### 🧩 UI Components (shadcn/ui)
-- **Layout**: Card, Separator, Aspect Ratio, Resizable Panels
-- **Forms**: Input, Textarea, Select, Checkbox, Radio Group, Switch
-- **Feedback**: Alert, Toast (Sonner), Progress, Skeleton
-- **Navigation**: Breadcrumb, Menubar, Navigation Menu, Pagination
-- **Overlay**: Dialog, Sheet, Popover, Tooltip, Hover Card
-- **Data Display**: Badge, Avatar, Calendar
-
-### 📊 Advanced Data Features
-- **Tables**: Powerful data tables with sorting, filtering, pagination (TanStack Table)
-- **Charts**: Beautiful visualizations with Recharts
-- **Forms**: Type-safe forms with React Hook Form + Zod validation
-
-### 🎨 Interactive Features
-- **Animations**: Smooth micro-interactions with Framer Motion
-- **Drag & Drop**: Modern drag-and-drop functionality with DND Kit
-- **Theme Switching**: Built-in dark/light mode support
-
-### 🔐 Backend Integration
-- **Authentication**: Ready-to-use auth flows with NextAuth.js
-- **Database**: Type-safe database operations with Prisma
-- **API Client**: HTTP requests with Fetch + TanStack Query
-- **State Management**: Simple and scalable with Zustand
-
-### 🌍 Production Features
-- **Internationalization**: Multi-language support with Next Intl
-- **Image Optimization**: Automatic image processing with Sharp
-- **Type Safety**: End-to-end TypeScript with Zod validation
-- **Essential Hooks**: 100+ useful React hooks with ReactUse for common patterns
-
-## 🤝 Get Started with Z.ai
-
-1. **Clone this scaffold** to jumpstart your project
-2. **Visit [chat.z.ai](https://chat.z.ai)** to access your AI coding assistant
-3. **Start building** with intelligent code generation and assistance
-4. **Deploy with confidence** using the production-ready setup
+For support and questions:
+- Create an issue on GitHub
+- Email: support@cleanindiaqr.com
+- Documentation: [Wiki](https://github.com/jitenkr2030/CleanIndia-QR/wiki)
 
 ---
 
-Built with ❤️ for the developer community. Supercharged by [Z.ai](https://chat.z.ai) 🚀
+**CleanIndia QR** - Building trust through transparency and accountability in public hygiene. 🚽✨
