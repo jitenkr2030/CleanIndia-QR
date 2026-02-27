@@ -15,6 +15,9 @@ export default function Home() {
   const [selectedIssue, setSelectedIssue] = useState('')
   const [comment, setComment] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>('')
   const { toast } = useToast()
 
   // Admin dashboard state
@@ -33,6 +36,9 @@ export default function Home() {
   const [selectedToilet, setSelectedToilet] = useState<any>(null)
   const [cleaningNotes, setCleaningNotes] = useState('')
   const [isSubmittingCleaning, setIsSubmittingCleaning] = useState(false)
+  const [cleaningSelectedFile, setCleaningSelectedFile] = useState<File | null>(null)
+  const [isCleaningUploading, setIsCleaningUploading] = useState(false)
+  const [cleaningUploadedImageUrl, setCleaningUploadedImageUrl] = useState<string>('')
 
   // Management portal state
   const [companies, setCompanies] = useState<any[]>([])
@@ -222,6 +228,71 @@ export default function Home() {
     { value: 'OTHER', label: 'Other', icon: '⚠️' }
   ]
 
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Invalid File Type",
+          description: "Please select a JPEG, PNG, or WebP image.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: "Please select an image smaller than 5MB.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setSelectedFile(file);
+    }
+  };
+
+  const handlePhotoUpload = async () => {
+    if (!selectedFile) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('type', 'feedback');
+    formData.append('toiletId', toiletData.id);
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      setUploadedImageUrl(data.url);
+      toast({
+        title: "Photo Uploaded!",
+        description: "Your photo has been uploaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Upload Failed",
+        description: error instanceof Error ? error.message : "Failed to upload photo. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSubmitFeedback = async () => {
     if (rating === 0) {
       toast({
@@ -245,6 +316,7 @@ export default function Home() {
           rating,
           issueType: selectedIssue || null,
           comment: comment || null,
+          photoUrl: uploadedImageUrl || null,
         }),
       })
 
@@ -388,14 +460,77 @@ export default function Home() {
 
               {/* Photo Upload */}
               <div>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => toast({ title: "Photo Upload", description: "Photo upload feature coming soon!" })}
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  Add Photo (Optional)
-                </Button>
+                <label className="block text-sm font-medium mb-2">Photo Evidence (Optional)</label>
+                {!uploadedImageUrl ? (
+                  <div className="space-y-3">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        id="photo-upload"
+                      />
+                      <label 
+                        htmlFor="photo-upload"
+                        className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                      >
+                        <Camera className="w-4 h-4" />
+                        Choose Photo
+                      </label>
+                      {selectedFile && (
+                        <div className="mt-3">
+                          <p className="text-sm text-gray-600">Selected: {selectedFile.name}</p>
+                          <p className="text-xs text-gray-500">Size: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
+                      )}
+                    </div>
+                    {selectedFile && (
+                      <Button 
+                        onClick={handlePhotoUpload}
+                        disabled={isUploading}
+                        className="w-full"
+                        variant="outline"
+                      >
+                        {isUploading ? 'Uploading...' : 'Upload Photo'}
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="relative rounded-lg overflow-hidden bg-gray-100">
+                      <img 
+                        src={uploadedImageUrl} 
+                        alt="Uploaded evidence" 
+                        className="w-full h-48 object-cover"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setUploadedImageUrl('');
+                          setSelectedFile(null);
+                        }}
+                        className="flex-1"
+                      >
+                        Remove Photo
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => document.getElementById('photo-upload')?.click()}
+                        className="flex-1"
+                      >
+                        Change Photo
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500">
+                  Max file size: 5MB. Supported formats: JPEG, PNG, WebP
+                </p>
               </div>
 
               {/* Submit */}
@@ -950,6 +1085,7 @@ export default function Home() {
             staffId: 'demo-staff-id', // In real app, this would come from authentication
             checklist: JSON.stringify(cleaningChecklist),
             notes: cleaningNotes || null,
+            photoUrl: cleaningUploadedImageUrl || null,
           }),
         })
 
@@ -969,6 +1105,8 @@ export default function Home() {
         setSelectedToilet(null)
         setCleaningChecklist([])
         setCleaningNotes('')
+        setCleaningUploadedImageUrl('')
+        setCleaningSelectedFile(null)
         
         // Refresh the toilets list
         const toiletsResponse = await fetch('/api/toilets')
