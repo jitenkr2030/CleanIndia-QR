@@ -1,0 +1,177 @@
+// CleanIndia QR Platform - Smart Toilet Monitoring & Hygiene Feedback System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Company/Organization that owns multiple locations
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  phone       String?
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  locations   Location[]
+  staff       Staff[]
+}
+
+// Physical location (building, facility)
+model Location {
+  id          String   @id @default(cuid())
+  companyId   String
+  name        String
+  address     String?
+  city        String?
+  state       String?
+  pincode     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  floors      Floor[]
+}
+
+// Floor in a building
+model Floor {
+  id          String   @id @default(cuid())
+  locationId  String
+  floorNumber String
+  name        String? // e.g., "Ground Floor", "First Floor"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  location    Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  toilets     Toilet[]
+}
+
+// Individual toilet unit
+model Toilet {
+  id              String   @id @default(cuid())
+  floorId         String
+  toiletNumber    String
+  qrCode          String   @unique
+  status          ToiletStatus @default(ACTIVE)
+  cleaningFrequency Int    @default(2) // cleaning every X hours
+  lastCleanedAt   DateTime?
+  nextCleaningDue DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  floor           Floor    @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  feedback        Feedback[]
+  cleaningLogs    CleaningLog[]
+  staffAssignments StaffAssignment[]
+}
+
+// User feedback for toilets
+model Feedback {
+  id          String       @id @default(cuid())
+  toiletId    String
+  rating      Int          // 1-5 stars
+  issueType   IssueType?
+  comment     String?
+  photoUrl    String?
+  userAgent   String?
+  ipAddress   String?
+  createdAt   DateTime     @default(now())
+  
+  toilet      Toilet       @relation(fields: [toiletId], references: [id], onDelete: Cascade)
+}
+
+// Cleaning staff member
+model Staff {
+  id          String     @id @default(cuid())
+  companyId   String
+  name        String
+  email       String     @unique
+  phone       String?
+  role        StaffRole  @default(CLEANER)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  assignments StaffAssignment[]
+  cleaningLogs CleaningLog[]
+}
+
+// Assignment of staff to toilets
+model StaffAssignment {
+  id        String   @id @default(cuid())
+  staffId   String
+  toiletId  String
+  assignedAt DateTime @default(now())
+  
+  staff     Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  toilet    Toilet   @relation(fields: [toiletId], references: [id], onDelete: Cascade)
+  
+  @@unique([staffId, toiletId])
+}
+
+// Cleaning activity log
+model CleaningLog {
+  id          String   @id @default(cuid())
+  toiletId    String
+  staffId     String
+  checklist   String?  // JSON string of completed items
+  photoUrl    String?
+  notes       String?
+  cleanedAt   DateTime @default(now())
+  
+  toilet      Toilet   @relation(fields: [toiletId], references: [id], onDelete: Cascade)
+  staff       Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+}
+
+// Cleaning schedule/reminders
+model CleaningSchedule {
+  id          String   @id @default(cuid())
+  toiletId    String
+  staffId     String?
+  scheduledAt DateTime
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+}
+
+// Enums
+enum ToiletStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+
+enum StaffRole {
+  CLEANER
+  SUPERVISOR
+  ADMIN
+}
+
+enum IssueType {
+  DIRTY_FLOOR
+  BAD_SMELL
+  NO_WATER
+  NO_SOAP
+  NO_TISSUE
+  BROKEN_FIXTURES
+  WET_FLOOR
+  TRASH_OVERFLOW
+  OTHER
+}
+
+enum CleaningChecklist {
+  FLOOR_CLEANED
+  SEAT_SANITIZED
+  TRASH_CLEARED
+  WATER_AVAILABLE
+  SUPPLIES_REFILLED
+  MIRROR_CLEANED
+  DOOR_HANDLES_SANITIZED
+}
